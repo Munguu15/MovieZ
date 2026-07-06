@@ -9,7 +9,7 @@ export const Hero = () => {
         fill
         className="object-cover w-full h-full absolute"
       />
-      <div className="w-full h-full flex z-10 relative items-center pl-[14px]">
+      <div className="w-full h-full flex z-10 relative items-center pl-[140px]">
         <div>
           <p className="text-white text-lg">Now Playing:</p>
           <p className="text-white text-4xl font-bold">Wicked</p>
@@ -25,7 +25,7 @@ export const Hero = () => {
             Land of Oz. After an encounter with the Wonderful Wizard of Oz,
             their friendship reaches a crossroads.
           </p>
-          <Button className="flex items-center gap-2 py-2.5 bg-white text-black rounded-lg ">
+          <Button className="flex items-center gap-2 py-2.5 bg-white text-black rounded-lg mt-4">
             <Image src={"/Play.png"}
                     alt="play"
                     width={20}

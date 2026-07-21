@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Header } from "./_components/header";
 import { Hero } from "./_components/hero";
-import { movielist } from "./_components/movieList";
+import { Movielist } from "./_components/movielist";
+import { MovieCard } from "./_components/movieCard";
+
 export default function Home() {
   return (
     <div className="flex flex-col w-full h-screen">
@@ -15,7 +17,9 @@ export default function Home() {
         <Header/>
         <div className="flex flex-col gap-13">
         <Hero/>
-        <movielist/>
+        <Movielist genre="Upcoming" seeMoreShow={true} url={'/upcoming'}/>
+        <Movielist genre="Popular" seeMoreShow={true} url={'/popular'}/>
+        <Movielist genre="Top Rated" seeMoreShow={true}url={'/toprated'}/>
         </div>
       </section>
     </div>

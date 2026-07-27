@@ -5,7 +5,7 @@ export const HeroCard= () => {
     return (
          <section className="w-full relative h-[600px] ">
       <Image
-        src="/images/Feature.png"
+        src="/images/movie21.png"
         alt="Property"
         fill
         className="object-cover w-full h-full absolute"

@@ -1,46 +1,23 @@
 import { ChevronRight, Link } from "lucide-react";
 import { MovieCard } from "./movieCard";
-const movies = [
-  {
-    id: 1,
-    name: "Dear santa",
-    image: "/images/movie1.png",
-    rating: 8.5,
-  },
-  {
-    id: 2,
-    name: "Dear santa",
-    image: "/movie2.png",
-    rating: 8.5,
-  },
-  {
-    id: 3,
-    name: "Dear santa",
-    image: "/movie3.png",
-    rating: 8.5,
-  },
-  {
-    id: 4,
-    name: "Dear santa",
-    image: "/movie4.png",
-    rating: 8.5,
-  },
-  {
-    id: 5,
-    name: "Dear santa",
-    image: "/movie5.png",
-    rating: 8.5,
-  },
-];
+
+type MovieType = {
+  id: number;
+  title: string;
+  poster_path: string;
+  vote_average: string;
+};
 
 export const Movielist = ({
   genre,
   seeMoreShow,
   url,
+  movies,
 }: {
   genre: string;
   seeMoreShow: boolean;
   url?: string;
+  movies: MovieType[];
 }) => {
   return (
     <section className="flex flex-col gap-4 w-full">
@@ -55,12 +32,12 @@ export const Movielist = ({
         )}
       </div>
       <div className="flex gap-4 flex-wrap justify-center">
-        {movies.map((item) => (
+        {movies?.slice(0, 10)?.map((item) => (
           <MovieCard
             key={item.id}
-            movieName={item.name}
-            image={item.image}
-            rating={item.rating}
+            movieName={item.title}
+            image={item.poster_path}
+            rating={item.vote_average}
           />
         ))}
         ;

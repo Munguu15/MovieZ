@@ -2,10 +2,11 @@ import { ChevronRight, Link } from "lucide-react";
 import { MovieCard } from "./movieCard";
 
 type MovieType = {
-  id: number;
+  id: string;
   title: string;
   poster_path: string;
   vote_average: string;
+
 };
 
 export const Movielist = ({
@@ -38,6 +39,7 @@ export const Movielist = ({
             movieName={item.title}
             image={item.poster_path}
             rating={item.vote_average}
+            id={item.id}
           />
         ))}
         ;

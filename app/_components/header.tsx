@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { GenreButton } from "./genreButton";
+import Link from "next/link";
 
 const data = [
   "Action",
@@ -55,23 +56,25 @@ const data = [
 export const Header = () => {
   return (
     <header className="flex justify-between items-center w-full px-20 py-3 border">
-      <Image
-        src="/images/logo.png"
-        alt="logo"
-        width={100}
-        height={100}
-        className="py-2"
-      />
+      <Link href="/">
+        <img
+          src="/images/logo.png"
+          alt="logo"
+          width={100}
+          height={100}
+          className="py-2"
+        />
+      </Link>
+
       <div className="flex items-center gap-3 ">
         <DropdownMenu>
           <DropdownMenuTrigger>
-            <Button variant="outline">
-              {" "}
+            <div>
               <span>
                 <ChevronDown />
               </span>
               Genre
-            </Button>
+            </div>
           </DropdownMenuTrigger>
 
           <DropdownMenuContent
@@ -86,39 +89,14 @@ export const Header = () => {
             <DropdownMenuSeparator />
             <div className="flex gap-4 flex-wrap ">
               {data.map((item, index) => {
-                return <GenreButton genreName ={item} />;
+                return <GenreButton genreName={item} />;
               })}
-              <Button>
+              <div>
                 Action <ChevronRight />
-              </Button>{" "}
+              </div>{" "}
             </div>
-            <DropdownMenuGroup>
-              <DropdownMenuItem>Team</DropdownMenuItem>
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>Invite users</DropdownMenuSubTrigger>
-                <DropdownMenuPortal>
-                  <DropdownMenuSubContent>
-                    <DropdownMenuItem>Email</DropdownMenuItem>
-                    <DropdownMenuItem>Message</DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem>More...</DropdownMenuItem>
-                  </DropdownMenuSubContent>
-                </DropdownMenuPortal>
-              </DropdownMenuSub>
-              <DropdownMenuItem>
-                New Team
-                <DropdownMenuShortcut>⌘+T</DropdownMenuShortcut>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
+
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>GitHub</DropdownMenuItem>
-              <DropdownMenuItem>Support</DropdownMenuItem>
-              <DropdownMenuItem disabled>API</DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-           
-              
           </DropdownMenuContent>
         </DropdownMenu>
         <div>

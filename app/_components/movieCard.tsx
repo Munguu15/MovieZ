@@ -33,32 +33,36 @@
 //   };
 import { Images } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 interface MovieCardProps {
   movieName: string;
   image: string;
   rating: string;
+  id: string;
 }
 
-export const MovieCard = ({ movieName, image, rating }: MovieCardProps) => {
+export const MovieCard = ({ movieName, image, rating, id }: MovieCardProps) => {
   return (
-    <div className="flex flex-col gap-2 w-[230px] h-[440px]">
-      <Image
-        src={`https://image.tmdb.org/t/p/w500${image}`}
-        alt={movieName}
-        width={200}
-        height={200}
-        className="w-full h-[340px] object-cover"
-      />
-      <div className="flex flex-col p-2 h-full">
-        <div className="flex items-center gap-2 py-2.5">
-          <Image src="/images/Star.png" alt="star" width={20} height={20} />
-          <span className="text-black text-lg">
-            {rating} <span className="text-gray-500">/10</span>
-          </span>
+    <Link href={`/movie/${id}`}>
+      <div className="flex flex-col gap-2 w-[230px] h-[440px]">
+        <Image
+          src={`https://image.tmdb.org/t/p/w500${image}`}
+          alt={movieName}
+          width={200}
+          height={200}
+          className="w-full h-[340px] object-cover"
+        />
+        <div className="flex flex-col p-2 h-full">
+          <div className="flex items-center gap-2 py-2.5">
+            <Image src="/images/Star.png" alt="star" width={20} height={20} />
+            <span className="text-black text-lg">
+              {rating} <span className="text-gray-500">/10</span>
+            </span>
+          </div>
+          <div>{movieName}</div>
         </div>
-        <div>{movieName}</div>
       </div>
-    </div>
+    </Link>
   );
 };

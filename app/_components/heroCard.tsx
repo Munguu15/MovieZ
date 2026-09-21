@@ -1,69 +1,64 @@
-import { Button } from "@/components/ui/button";
+"use client";
+
 import Image from "next/image";
-import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Trailer } from "./trailer";
+import { tmdbFetch, type Movie } from "@/lib/tmdb";
 
-const API_KEY = "b65cbed36ce66f8c9ec12d6f69e0c789";
-const BASE_URL = "https://api.themoviedb.org/3";
-
-type GenreType = {
-  name: string;
-  id: string;
+type VideosResponse = {
+  results: { key: string; type: string; site: string }[];
 };
-type MovieType = {
-  id: number;
-  title: string;
-  poster_path: string;
-  backdrop_path: string;
-  release_date: string;
-  overview: string;
-  genres: GenreType[];
-  vote_average: number;
-  vote_count: number;
-};
-export const HeroCard = ({ movie }: { movie: MovieType }) => {
-  const [movieTrailer, setMovieTrailer] = useState<string>("");
-  const movieTrailerUrl = `https://api.themoviedb.org/3/movie/${movie.id}/videos?language=en-US&api_key=${API_KEY}`;
 
-  const fetchMovieTrailer = async () => {
-    const response = await fetch(movieTrailerUrl);
-    const data = await response.json();
-
-    setMovieTrailer(data.results[0].key);
-  };
+export const HeroCard = ({ movie }: { movie: Movie }) => {
+  const [movieTrailer, setMovieTrailer] = useState("");
 
   useEffect(() => {
-    fetchMovieTrailer();
-  }, []);
-  return (
-    <section className="w-full relative h-[600px] ">
-      <Image
-        src={`https://image.tmdb.org/t/p/w500${movie.backdrop_path}`}
-        alt="Property"
-        fill
-        className=" w-full h-full object-cover  absolute"
-      />
+    const fetchMovieTrailer = async () => {
+      try {
+        const data = await tmdbFetch<VideosResponse>(`movie/${movie.id}/videos`);
+        const trailer =
+          data.results.find(
+            (video) => video.type === "Trailer" && video.site === "YouTube",
+          ) ?? data.results[0];
+        setMovieTrailer(trailer?.key ?? "");
+      } catch {
+        setMovieTrailer("");
+      }
+    };
 
-      <div className="w-full h-full flex z-10 relative items-center pl-[140px]">
-        <div>
-          <p className="text-white text-lg">Now Playing:</p>
-          <p className="text-white text-4xl font-bold">{movie.title}</p>
-          <div className="flex items-center gap-2 py-2.5 ">
+    fetchMovieTrailer();
+  }, [movie.id]);
+
+  return (
+    <section className="relative h-[600px] w-full">
+      <Image
+        src={`https://image.tmdb.org/t/p/original${movie.backdrop_path}`}
+        alt={movie.title}
+        fill
+        className="absolute h-full w-full object-cover"
+        priority
+      />
+      <div className="absolute inset-0 bg-black/45" />
+
+      <div className="relative z-10 flex h-full items-center pl-8 sm:pl-[140px]">
+        <div className="max-w-md space-y-3">
+          <p className="text-lg text-white/90">Now Playing:</p>
+          <p className="text-4xl font-bold text-white">{movie.title}</p>
+          <div className="flex items-center gap-2 py-2.5">
             <Image
-              src={"/images/star.png"}
+              src="/images/star.png"
               alt="star"
               width={20}
               height={20}
-              className=" object-cover"
+              className="object-cover"
             />
-            <span className="text-white text-lg">
-              {movie.vote_average}
-              <span className="text-gray-500">/10</span>
+            <span className="text-lg text-white">
+              {movie.vote_average?.toFixed?.(1) ?? movie.vote_average}
+              <span className="text-white/60">/10</span>
             </span>
           </div>
-          <p className="text-white text-xs w-[300px]">{movie.overview}</p>
-          <Trailer trailerKey={movieTrailer} />
+          <p className="line-clamp-4 text-xs text-white/90">{movie.overview}</p>
+          {movieTrailer ? <Trailer trailerKey={movieTrailer} /> : null}
         </div>
       </div>
     </section>

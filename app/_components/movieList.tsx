@@ -1,13 +1,7 @@
-import { ChevronRight, Link } from "lucide-react";
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { MovieCard } from "./movieCard";
-
-type MovieType = {
-  id: string;
-  title: string;
-  poster_path: string;
-  vote_average: string;
-
-};
+import type { Movie } from "@/lib/tmdb";
 
 export const Movielist = ({
   genre,
@@ -18,31 +12,32 @@ export const Movielist = ({
   genre: string;
   seeMoreShow: boolean;
   url?: string;
-  movies: MovieType[];
+  movies: Movie[];
 }) => {
   return (
-    <section className="flex flex-col gap-4 w-full">
-      <div className="flex justify-between items-center w-full">
-        <p>{genre}</p>
-        {seeMoreShow && (
-          <div className="flex item-center gap-2 ">
-            <a href={url}>See more</a>
-
-            <ChevronRight />
-          </div>
+    <section className="flex w-full flex-col gap-4">
+      <div className="flex w-full items-center justify-between">
+        <p className="text-xl font-semibold text-foreground">{genre}</p>
+        {seeMoreShow && url && (
+          <Link
+            href={url}
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+          >
+            See more
+            <ChevronRight className="size-4" />
+          </Link>
         )}
       </div>
-      <div className="flex gap-4 flex-wrap justify-center">
+      <div className="flex flex-wrap justify-center gap-4">
         {movies?.slice(0, 10)?.map((item) => (
           <MovieCard
             key={item.id}
             movieName={item.title}
             image={item.poster_path}
-            rating={item.vote_average}
-            id={item.id}
+            rating={String(item.vote_average?.toFixed?.(1) ?? item.vote_average)}
+            id={String(item.id)}
           />
         ))}
-        ;
       </div>
     </section>
   );

@@ -1,50 +1,56 @@
 "use client";
-import { Header } from "../_components/header";
+
+import { useCallback, useEffect, useState } from "react";
+import { PageShell } from "../_components/page-shell";
 import { Movielist } from "../_components/movielist";
 import { PaginationMovie } from "../_components/paginationMovie";
-import { useEffect, useState } from "react";
+import { LoadingState } from "../_components/loading-state";
+import { ErrorState } from "../_components/error-state";
+import { tmdbFetch, type Movie, type PaginatedMovies } from "@/lib/tmdb";
 
-const API_KEY = "b65cbed36ce66f8c9ec12d6f69e0c789";
-const BASE_URL = "https://api.themoviedb.org/3";
-const ENDPOINT_UPCOMING = "/movie/upcoming?language=en-US&page=1";
+export default function UpcomingPage() {
+  const [movies, setMovies] = useState<Movie[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-const upcomingUrl = `${BASE_URL}${ENDPOINT_UPCOMING}&api_key=${API_KEY}`;
-
-type Movie = {
-  id: number;
-  title: string;
-  poster_path: string;
-  release_date: string;
-};
-
-
-export default function Home() {
-  const [upcomingMovies, setUpcomingMovies] = useState<any[]>([]);
-  const fetchUpcomingMovies = async () => {
-    const response = await fetch(upcomingUrl);
-    const data = await response.json();
-    console.log(data);
-
-    setUpcomingMovies(data.results);
-  };
+  const fetchMovies = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await tmdbFetch<PaginatedMovies>("movie/upcoming", {
+        page: 1,
+      });
+      setMovies(data.results ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load upcoming");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    fetchUpcomingMovies();
-    
-  }, []);
+    fetchMovies();
+  }, [fetchMovies]);
+
   return (
-    <div className="flex flex-col w-full h-screen">
-      <section className="flex flex-col w-[1440px] mx-auto gap-6 ">
-      <Header />
-      <Movielist 
-            movies={upcomingMovies}
+    <PageShell wide>
+      {loading ? (
+        <LoadingState />
+      ) : error ? (
+        <ErrorState message={error} onRetry={fetchMovies} />
+      ) : (
+        <>
+          <Movielist
+            movies={movies}
             genre="Upcoming"
-            url={"/upcoming"} 
-            seeMoreShow={false} />
-      <div className="flex justify-end items-center border">
-        <PaginationMovie />
-      </div>
-      </section>
-    </div>
+            url="/upcoming"
+            seeMoreShow={false}
+          />
+          <div className="flex items-center justify-end border-t border-border pt-4">
+            <PaginationMovie />
+          </div>
+        </>
+      )}
+    </PageShell>
   );
 }

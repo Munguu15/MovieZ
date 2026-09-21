@@ -1,131 +1,137 @@
 "use client";
-import { Star } from "lucide-react";
-import { Header } from "@/app/_components/header";
-import { useEffect, useState } from "react";
-import { Play } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import Image from "next/image";
+import { Star } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { PageShell } from "@/app/_components/page-shell";
 import { Trailer } from "@/app/_components/trailer";
+import { LoadingState } from "@/app/_components/loading-state";
+import { ErrorState } from "@/app/_components/error-state";
+import {
+  tmdbFetch,
+  type MovieDetails,
+} from "@/lib/tmdb";
 
-const API_KEY = "b65cbed36ce66f8c9ec12d6f69e0c789";
-const BASE_URL = "https://api.themoviedb.org/3";
-
-type GenreType = {
-  name: string;
-  id: string;
-};
-type MovieType = {
-  id: number;
-  title: string;
-  poster_path: string;
-  backdrop_path: string;
-  release_date: string;
-  overview: string;
-  genres: GenreType[];
-  vote_average: number;
-  vote_count: number;
+type VideosResponse = {
+  results: { key: string; type: string; site: string }[];
 };
 
-export default function Home() {
+export default function MovieDetailsPage() {
   const { id } = useParams();
-  const [movieDetails, setMovieDetails] = useState<MovieType | null>(null);
-  const [movieTrailer, setMovieTrailer] = useState<string>("");
-  const apiUrl = `${BASE_URL}/movie/${id}?language=en-US&api_key=${API_KEY}`;
-  const movieTrailerUrl = `https://api.themoviedb.org/3/movie/${id}/videos?language=en-US&api_key=${API_KEY}`;
+  const movieId = String(id ?? "");
 
-  const fetchMovieDetails = async () => {
-    const response = await fetch(apiUrl);
-    const data = await response.json();
-    console.log("hahehehehohoha", data);
+  const [movieDetails, setMovieDetails] = useState<MovieDetails | null>(null);
+  const [movieTrailer, setMovieTrailer] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-    setMovieDetails(data);
-  };
-  const fetchMovieTrailer = async () => {
-    const response = await fetch(movieTrailerUrl);
-    const data = await response.json();
-    console.log("movieTrailer", data);
+  const fetchMovie = useCallback(async () => {
+    if (!movieId) {
+      setError("Invalid movie id");
+      setLoading(false);
+      return;
+    }
 
-    setMovieTrailer(data.results[0].key);
-  };
+    setLoading(true);
+    setError(null);
+    try {
+      const [details, videos] = await Promise.all([
+        tmdbFetch<MovieDetails>(`movie/${movieId}`),
+        tmdbFetch<VideosResponse>(`movie/${movieId}/videos`),
+      ]);
+
+      setMovieDetails(details);
+      const trailer =
+        videos.results.find(
+          (video) => video.type === "Trailer" && video.site === "YouTube",
+        ) ?? videos.results[0];
+      setMovieTrailer(trailer?.key ?? "");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load movie");
+    } finally {
+      setLoading(false);
+    }
+  }, [movieId]);
 
   useEffect(() => {
-    fetchMovieDetails();
-    fetchMovieTrailer();
-  }, []);
+    fetchMovie();
+  }, [fetchMovie]);
 
   return (
-    <div className="min-h-screen bg-white text-black w-full px-8 py-6 max-w-[1280px] mx-auto space-y-6">
-      <div className="min-h-screen bg-white text-black px-8 py-6 max-w-7xl mx-auto space-y-6">
-        <Header />
+    <PageShell>
+      {loading ? (
+        <LoadingState label="Loading movie details..." />
+      ) : error ? (
+        <ErrorState message={error} onRetry={fetchMovie} />
+      ) : movieDetails ? (
+        <div className="space-y-6">
+          <div className="flex w-full flex-row items-start justify-between gap-4">
+            <div className="flex flex-col">
+              <h1 className="text-4xl font-bold tracking-tight text-foreground">
+                {movieDetails.title}
+              </h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {movieDetails.release_date}
+                {movieDetails.runtime
+                  ? ` · ${movieDetails.runtime} min`
+                  : null}
+              </p>
+            </div>
 
-        <div className="flex flex-row justify-between items-start w-full">
-          <div className="flex flex-col">
-            <h1 className="text-4xl font-bold tracking-tight">
-              {movieDetails?.title}
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">
-              {movieDetails?.release_date}
-            </p>
-          </div>
-
-          <div className="flex flex-col items-end">
-            <span className="text-xs text-gray-400 font-medium">Rating</span>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-              <span className="font-bold text-lg">
-                {movieDetails?.vote_average}
+            <div className="flex flex-col items-end">
+              <span className="text-xs font-medium text-muted-foreground">
+                Rating
+              </span>
+              <div className="mt-0.5 flex items-center gap-1.5">
+                <Star className="size-5 fill-yellow-400 text-yellow-400" />
+                <span className="text-lg font-bold text-foreground">
+                  {movieDetails.vote_average?.toFixed?.(1) ??
+                    movieDetails.vote_average}
+                </span>
+              </div>
+              <span className="text-xs text-muted-foreground">
+                {movieDetails.vote_count?.toLocaleString()} votes
               </span>
             </div>
-            <span className="text-xs text-gray-400">
-              {movieDetails?.vote_count}
-            </span>
           </div>
-        </div>
-        <div className=" flex-row grid grid-cols-1 md:grid-cols-3 gap-4 h-[420px]">
-          <div className="md:col-span-1 relative rounded-lg overflow-hidden bg-gray-100 h-full">
-            <img
-              src={`https://image.tmdb.org/t/p/w500${movieDetails?.poster_path}`}
-              alt={movieDetails?.title}
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="md:col-span-2 relative rounded-lg overflow-hidden bg-gray-100 h-full group">
-            <img
-              src={`https://image.tmdb.org/t/p/w500${movieDetails?.backdrop_path}`}
-              width={400}
-              height={400}
-              alt={movieDetails?.title}
-              className="w-full h-full object-cover"
-            />
 
-            <div className="absolute inset-0 bg-black/20 flex items-end p-6">
-              <Trailer trailerKey={movieTrailer} />
+          <div className="grid h-auto grid-cols-1 gap-4 md:grid-cols-3 md:h-[420px]">
+            <div className="relative h-[420px] overflow-hidden rounded-lg bg-muted md:col-span-1 md:h-full">
+              {movieDetails.poster_path ? (
+                <img
+                  src={`https://image.tmdb.org/t/p/w500${movieDetails.poster_path}`}
+                  alt={movieDetails.title}
+                  className="h-full w-full object-cover"
+                />
+              ) : null}
+            </div>
+            <div className="group relative h-[420px] overflow-hidden rounded-lg bg-muted md:col-span-2 md:h-full">
+              {movieDetails.backdrop_path ? (
+                <img
+                  src={`https://image.tmdb.org/t/p/w780${movieDetails.backdrop_path}`}
+                  alt={movieDetails.title}
+                  className="h-full w-full object-cover"
+                />
+              ) : null}
+              <div className="absolute inset-0 flex items-end bg-black/20 p-6">
+                {movieTrailer ? <Trailer trailerKey={movieTrailer} /> : null}
+              </div>
             </div>
           </div>
-        </div>
-        <div className="flex flex-col gap-4">
-          <div className="flex w-full flex-wrap justify-start gap-2">
-            {movieDetails?.genres?.map((item) => {
-              return <Badge key={item.id}>{item.name}</Badge>;
-            })}
+
+          <div className="flex flex-col gap-4">
+            <div className="flex w-full flex-wrap justify-start gap-2">
+              {movieDetails.genres?.map((genre) => (
+                <Badge key={genre.id}>{genre.name}</Badge>
+              ))}
+            </div>
+            <p className="text-sm leading-6 text-muted-foreground">
+              {movieDetails.overview}
+            </p>
           </div>
-          <p className="text-sm leading-6 text-gray-700 dark:text-gray-300">
-            {movieDetails?.overview}
-          </p>
         </div>
-      </div>
-    </div>
+      ) : null}
+    </PageShell>
   );
 }

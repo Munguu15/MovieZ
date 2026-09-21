@@ -1,90 +1,74 @@
 "use client";
 
-import { Header } from "./_components/header";
+import { useCallback, useEffect, useState } from "react";
 import { Hero } from "./_components/hero";
 import { Movielist } from "./_components/movielist";
-import { MovieCard } from "./_components/movieCard";
-import { useEffect, useState } from "react";
-
-const API_KEY = "b65cbed36ce66f8c9ec12d6f69e0c789";
-const BASE_URL = "https://api.themoviedb.org/3";
-const ENDPOINT_UPCOMING = "/movie/upcoming?language=en-US&page=1";
-const ENDPOINT_POPULAR = "/movie/popular?language=en-US&page=1";
-const ENDPOINT_TOP = "/movie/top_rated?language=en-US&page=1";
-
-const upcomingUrl = `${BASE_URL}${ENDPOINT_UPCOMING}&api_key=${API_KEY}`;
-const popularUrl = `${BASE_URL}${ENDPOINT_POPULAR}&api_key=${API_KEY}`;
-const topRatedUrl = `${BASE_URL}${ENDPOINT_TOP}&api_key=${API_KEY}`;
-
-export type MovieType = {
-  id: number;
-  title: string;
-  poster_path: string;
-  release_date: string;
-  vote_average: number;
-  overview: string;
-  backdrop_path: string;
-};
+import { PageShell } from "./_components/page-shell";
+import { LoadingState } from "./_components/loading-state";
+import { ErrorState } from "./_components/error-state";
+import { tmdbFetch, type Movie, type PaginatedMovies } from "@/lib/tmdb";
 
 export default function Home() {
-  const [upcomingMovies, setUpcomingMovies] = useState<any[]>([]);
-  const [popularMovies, setPopularMovies] = useState<any[]>([]);
-  const [topRatedMovies, setTopRatedMovies] = useState<any[]>([]);
+  const [upcomingMovies, setUpcomingMovies] = useState<Movie[]>([]);
+  const [popularMovies, setPopularMovies] = useState<Movie[]>([]);
+  const [topRatedMovies, setTopRatedMovies] = useState<Movie[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const fetchUpcomingMovies = async () => {
-    const response = await fetch(upcomingUrl);
-    const data = await response.json();
-    console.log(data);
-
-    setUpcomingMovies(data.results);
-  };
-
-  const fetchPopularMovies = async () => {
-    const response = await fetch(popularUrl);
-    const data = await response.json();
-
-    setPopularMovies(data.results);
-  };
-
-  const fetchTopRatedMovies = async () => {
-    const response = await fetch(topRatedUrl);
-    const data = await response.json();
-
-    setTopRatedMovies(data.results);
-    console.log("dada", data);
-  };
-  useEffect(() => {
-    fetchUpcomingMovies();
-    fetchPopularMovies();
-    fetchTopRatedMovies();
+  const fetchHomeMovies = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [upcoming, popular, topRated] = await Promise.all([
+        tmdbFetch<PaginatedMovies>("movie/upcoming", { page: 1 }),
+        tmdbFetch<PaginatedMovies>("movie/popular", { page: 1 }),
+        tmdbFetch<PaginatedMovies>("movie/top_rated", { page: 1 }),
+      ]);
+      setUpcomingMovies(upcoming.results ?? []);
+      setPopularMovies(popular.results ?? []);
+      setTopRatedMovies(topRated.results ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load movies");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
+  useEffect(() => {
+    fetchHomeMovies();
+  }, [fetchHomeMovies]);
+
   return (
-    <div className="flex flex-col w-full h-screen">
-      <section className="flex flex-col w-[1440px] mx-auto">
-        <Header />
-        <div className="flex flex-col gap-13">
-          <Hero />
-          <Movielist
-            movies={upcomingMovies}
-            genre="Upcoming"
-            seeMoreShow={true}
-            url={"/upcoming"}
-          />
-          <Movielist
-            genre="Popular"
-            seeMoreShow={true}
-            url={"/popular"}
-            movies={popularMovies}
-          />
-          <Movielist
-            movies={topRatedMovies}
-            genre="Top Rated"
-            seeMoreShow={true}
-            url={"/toprated"}
-          />
-        </div>
-      </section>
-    </div>
+    <PageShell wide>
+      <div className="flex flex-col gap-13">
+        <Hero />
+        {loading ? (
+          <LoadingState />
+        ) : error ? (
+          <ErrorState message={error} onRetry={fetchHomeMovies} />
+        ) : (
+          <>
+            <Movielist
+              movies={upcomingMovies}
+              genre="Upcoming"
+              seeMoreShow
+              url="/upcoming"
+            />
+            <Movielist
+              movies={popularMovies}
+              genre="Popular"
+              seeMoreShow
+              url="/popular"
+            />
+            <Movielist
+              movies={topRatedMovies}
+              genre="Top Rated"
+              seeMoreShow
+              url="/toprated"
+            />
+          </>
+        )}
+      </div>
+    </PageShell>
   );
 }

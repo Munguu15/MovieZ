@@ -1,46 +1,56 @@
 "use client";
-import { Header } from "../_components/header";
+
+import { useCallback, useEffect, useState } from "react";
+import { PageShell } from "../_components/page-shell";
 import { Movielist } from "../_components/movielist";
 import { PaginationMovie } from "../_components/paginationMovie";
-import { useEffect, useState } from "react";
+import { LoadingState } from "../_components/loading-state";
+import { ErrorState } from "../_components/error-state";
+import { tmdbFetch, type Movie, type PaginatedMovies } from "@/lib/tmdb";
 
-const ENDPOINT_POPULAR = "/movie/popular?language=en-US&page=1";
+export default function PopularPage() {
+  const [movies, setMovies] = useState<Movie[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-const API_KEY = "b65cbed36ce66f8c9ec12d6f69e0c789";
-const BASE_URL = "https://api.themoviedb.org/3";
-const popularUrl = `${BASE_URL}${ENDPOINT_POPULAR}&api_key=${API_KEY}`;
-type Movie = {
-  id: number;
-  title: string;
-  poster_path: string;
-  release_date: string;
-};
-export default function Home() {
-  const [popularMovies, setPopularMovies] = useState<any[]>([]);
-
-  const fetchPopularMovies = async () => {
-    const response = await fetch(popularUrl);
-    const data = await response.json();
-
-    setPopularMovies(data.results);
-  };
-  useEffect(() => {
-    fetchPopularMovies();
+  const fetchMovies = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await tmdbFetch<PaginatedMovies>("movie/popular", {
+        page: 1,
+      });
+      setMovies(data.results ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load popular");
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchMovies();
+  }, [fetchMovies]);
+
   return (
-    <div className="flex flex-col w-full h-screen">
-      <section className="flex flex-col w-[1440px] mx-auto gap-6 ">
-        <Header />
-        <Movielist
-          url={"/popular"}
-          movies={popularMovies}
-          genre="Popular"
-          seeMoreShow={false}
-        />
-        <div className="flex justify-end items-center border">
-          <PaginationMovie />
-        </div>
-      </section>
-    </div>
+    <PageShell wide>
+      {loading ? (
+        <LoadingState />
+      ) : error ? (
+        <ErrorState message={error} onRetry={fetchMovies} />
+      ) : (
+        <>
+          <Movielist
+            movies={movies}
+            genre="Popular"
+            url="/popular"
+            seeMoreShow={false}
+          />
+          <div className="flex items-center justify-end border-t border-border pt-4">
+            <PaginationMovie />
+          </div>
+        </>
+      )}
+    </PageShell>
   );
 }

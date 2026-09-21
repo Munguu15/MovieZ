@@ -1,9 +1,8 @@
-import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ChevronDown, ChevronRight } from "lucide-react";
-import React from "react";
-import { Search } from "lucide-react";
+"use client";
+
+import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
+import { ChevronDown, Search } from "lucide-react";
 import {
   InputGroup,
   InputGroupAddon,
@@ -12,50 +11,27 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuPortal,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { GenreButton } from "./genreButton";
+import { ThemeToggle } from "./theme-toggle";
+import { TMDB_GENRES } from "@/lib/tmdb";
 import Link from "next/link";
 
-const data = [
-  "Action",
-  "Adventure",
-  "Animation",
-  "Biography",
-  "Comedy",
-  "Crime",
-  "Documentary",
-  "Drama",
-  "Family",
-  "Fantasy",
-  "Film-Noir",
-  "Game-show",
-  "History",
-  "Horror",
-  "Music",
-  "Musical",
-  "Mystery",
-  "News",
-  "Reality-TV",
-  "Romance",
-  "Sci-Fi",
-  "Short",
-  "Sport",
-  "Talk-show",
-];
-
 export const Header = () => {
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+
+  const onSearch = (event: FormEvent) => {
+    event.preventDefault();
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    router.push(`/search?q=${encodeURIComponent(trimmed)}`);
+  };
+
   return (
-    <header className="flex justify-between items-center w-full px-20 py-3 border">
+    <header className="flex w-full flex-wrap items-center justify-between gap-4 border-b border-border bg-background py-3 text-foreground sm:px-4">
       <Link href="/">
         <img
           src="/images/logo.png"
@@ -66,52 +42,52 @@ export const Header = () => {
         />
       </Link>
 
-      <div className="flex items-center gap-3 ">
+      <div className="flex flex-1 flex-wrap items-center justify-center gap-3">
         <DropdownMenu>
-          <DropdownMenuTrigger>
-            <div>
-              <span>
-                <ChevronDown />
-              </span>
-              Genre
-            </div>
+          <DropdownMenuTrigger className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm hover:bg-muted">
+            <ChevronDown className="size-4" />
+            Genre
           </DropdownMenuTrigger>
 
           <DropdownMenuContent
-            className="w-[577px] h-[333px] p-5"
+            className="max-h-[360px] w-[min(577px,90vw)] overflow-y-auto p-5"
             align="start"
           >
-            <div className="flex flex-col gap-2 ">
+            <div className="flex flex-col gap-1">
               <p className="text-2xl font-bold">Genres</p>
-              <p>See lists of movies by genre</p>
+              <p className="text-sm text-muted-foreground">
+                See lists of movies by genre
+              </p>
             </div>
 
             <DropdownMenuSeparator />
-            <div className="flex gap-4 flex-wrap ">
-              {data.map((item, index) => {
-                return <GenreButton genreName={item} />;
-              })}
-              <div>
-                Action <ChevronRight />
-              </div>{" "}
+            <div className="flex flex-wrap gap-2">
+              {TMDB_GENRES.map((genre) => (
+                <GenreButton
+                  key={genre.id}
+                  genreId={genre.id}
+                  genreName={genre.name}
+                />
+              ))}
             </div>
-
-            <DropdownMenuSeparator />
           </DropdownMenuContent>
         </DropdownMenu>
-        <div>
-          <InputGroup className="max-w-xs border rounded-lg flex flex-row h-9 w-[379px]">
-            <InputGroupInput placeholder="Search..." />
+
+        <form onSubmit={onSearch} className="w-full max-w-[379px]">
+          <InputGroup className="flex h-9 w-full flex-row rounded-lg border">
             <InputGroupAddon>
-              <Search />
+              <Search className="size-4" />
             </InputGroupAddon>
-            <InputGroupAddon align="inline-end"></InputGroupAddon>
+            <InputGroupInput
+              placeholder="Search..."
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
           </InputGroup>
-        </div>
+        </form>
       </div>
-      <div className="flex items-center justify-center p-2.5 rounded-lg border border-gray-300">
-        <Image src="/images/moon.png" alt="moon" width={36} height={36} />
-      </div>
+
+      <ThemeToggle />
     </header>
   );
 };

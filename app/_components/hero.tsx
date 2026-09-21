@@ -1,9 +1,9 @@
-import { Button } from "@/components/ui/button";
-import Image from "next/image";
-import { HeroCard } from "./heroCard";
-import { Card, CardContent } from "@/components/ui/card";
-import { useEffect } from "react";
-import { useState } from "react";
+"use client";
+
+import { useEffect, useState } from "react";
+import { LoadingState } from "./loading-state";
+import { ErrorState } from "./error-state";
+import { tmdbFetch, type Movie, type PaginatedMovies } from "@/lib/tmdb";
 import {
   Carousel,
   CarouselContent,
@@ -11,36 +11,41 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-const NOW_PLAYING = "/movie/now_playing?language=en-US&page=1";
+import { HeroCard } from "./heroCard";
 
-const API_KEY = "b65cbed36ce66f8c9ec12d6f69e0c789";
-const BASE_URL = "https://api.themoviedb.org/3";
-const popularUrl = `${BASE_URL}${NOW_PLAYING}&api_key=${API_KEY}`;
-type Movie = {
-  id: number;
-  title: string;
-  poster_path: string;
-  release_date: string;
-};
 export const Hero = () => {
-  const [nowPlaying, setNowPlaying] = useState<any[]>([]);
+  const [nowPlaying, setNowPlaying] = useState<Movie[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchNowPlayingMovies = async () => {
-    const response = await fetch(popularUrl);
-    const data = await response.json();
-
-    setNowPlaying(data.results);
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await tmdbFetch<PaginatedMovies>("movie/now_playing", {
+        page: 1,
+      });
+      setNowPlaying(data.results ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load hero");
+    } finally {
+      setLoading(false);
+    }
   };
-  console.log("dhdahdha", nowPlaying);
 
   useEffect(() => {
     fetchNowPlayingMovies();
   }, []);
+
+  if (loading) return <LoadingState label="Loading now playing..." />;
+  if (error) return <ErrorState message={error} onRetry={fetchNowPlayingMovies} />;
+  if (!nowPlaying.length) return null;
+
   return (
-    <Carousel className="w-full h-150 ">
+    <Carousel className="h-150 w-full">
       <CarouselContent>
-        {nowPlaying.slice(0, 5).map((item, index) => (
-          <CarouselItem key={index}>
+        {nowPlaying.slice(0, 5).map((item) => (
+          <CarouselItem key={item.id}>
             <HeroCard movie={item} />
           </CarouselItem>
         ))}

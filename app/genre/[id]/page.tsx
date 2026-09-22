@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { PageShell } from "@/app/_components/page-shell";
-import { Movielist } from "@/app/_components/movielist";
+import { Movielist } from "@/app/_components/movieList";
 import { LoadingState } from "@/app/_components/loading-state";
 import { ErrorState } from "@/app/_components/error-state";
 import {

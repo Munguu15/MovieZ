@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Hero } from "./_components/hero";
-import { Movielist } from "./_components/movielist";
+import { Movielist } from "./_components/movieList";
 import { PageShell } from "./_components/page-shell";
 import { LoadingState } from "./_components/loading-state";
 import { ErrorState } from "./_components/error-state";
